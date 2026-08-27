@@ -1,10 +1,5 @@
 ## Recursive Decomposition
 
-- Split the task into self-contained subproblems, each with a stated input and a
-  stated deliverable.
-- Solve one subproblem at a time and carry only its deliverable forward, not the
-  intermediate reasoning that produced it.
-- If a subproblem is still too large to settle with a handful of tool calls,
-  split it again before attempting it.
-- Assemble the final answer from the deliverables only, and check the assembled
-  result against the original task wording before submitting.
+Split the task into self-contained subproblems, each with a stated input and
+deliverable. Solve one at a time, carrying only its deliverable forward. Split
+again anything too large for a handful of calls.

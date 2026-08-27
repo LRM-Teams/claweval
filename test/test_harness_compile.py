@@ -15,6 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 from utils.harness_compile import (  # noqa: E402
+    MAX_APPENDIX_CHARS,
     CompileError,
     compile_spec,
     load_seeds,
@@ -230,6 +231,31 @@ def test_compile_mounts_skill_and_stays_consistent(tmp_path):
     validate_overlay(dest)
 
 
+def test_every_module_combination_fits_the_appendix_budget():
+    """The design space is small enough to enumerate, so the templates are sized
+    against the worst combination rather than the average one."""
+    worst = (0, None)
+    for memory in MEMORY_VALUES:
+        for planning in PLANNING_VALUES:
+            for action in ACTION_VALUES:
+                for capability in ({"mode": "task_only", "skills": []},
+                                   {"mode": "route", "skills": []}):
+                    spec = validate_spec(
+                        base_spec(
+                            modules={
+                                "memory": memory,
+                                "planning": planning,
+                                "action": action,
+                                "capability": capability,
+                            }
+                        )
+                    )
+                    text, fragments = render_appendix(spec)
+                    if len(text) > worst[0]:
+                        worst = (len(text), fragments)
+    assert worst[0] <= MAX_APPENDIX_CHARS, worst
+
+
 def test_oversized_appendix_errors_instead_of_truncating(tmp_path):
     templates = tmp_path / "templates"
     (templates / "memory").mkdir(parents=True)
@@ -262,6 +288,7 @@ def test_every_seed_compiles_to_a_legal_overlay(name, tmp_path):
     dest = tmp_path / name
     audit = compile_spec(spec, dest)
     assert audit["appendix_bytes"] <= MAX_APPENDIX_BYTES
+    assert audit["appendix_chars"] <= MAX_APPENDIX_CHARS
     assert validate_overlay(dest) == dest
 
 

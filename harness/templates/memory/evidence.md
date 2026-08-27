@@ -1,11 +1,6 @@
 ## Evidence Table
 
-Every fact you will use must be sourced. Maintain a file `evidence.md` as a
-table with the columns: claim, source, how obtained.
-
-- `source` is a URL, an absolute file path, or the exact tool call that returned
-  it. "I recall" and "it is well known" are not sources.
-- Add the row at the moment you obtain the fact, not retroactively.
-- If two sources disagree, keep both rows and resolve the conflict explicitly
-  before using either claim.
-- A claim with no row in `evidence.md` may not appear in the final answer.
+Keep an `evidence.md` table of claim, source, how obtained. A source is a URL, a
+file path, or the exact call that returned it; "well known" is not a source. Add
+the row when you obtain the fact. A claim with no row may not appear in the
+answer.

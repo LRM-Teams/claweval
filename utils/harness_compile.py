@@ -37,6 +37,13 @@ SKILLS_ROOT = REPO_ROOT / "skills"
 
 FRAGMENT_SEPARATOR = "\n\n"
 
+# Tighter than the overlay's 4096-byte ceiling. The appendix competes with the
+# task prompt for context, and the ClawEval suite -- whose hand-evolved winners
+# all land at 1150-1500 chars -- caps its own editor at 1500. Every one of the
+# 192 module combinations must fit, so the templates are sized against the worst
+# combination rather than the average one.
+MAX_APPENDIX_CHARS = 1500
+
 # (module key, template subdirectory) in render order.
 _RENDER_ORDER = (
     ("memory", "memory"),
@@ -99,6 +106,7 @@ def compile_spec(
     skills_root: str | Path = SKILLS_ROOT,
     task_skills: Mapping[str, str | Path] | None = None,
     validate: bool = True,
+    max_chars: int = MAX_APPENDIX_CHARS,
 ) -> dict:
     """Write the overlay described by ``spec`` into ``dest``.
 
@@ -119,12 +127,15 @@ def compile_spec(
 
     appendix_text, fragments = render_appendix(spec, templates_root)
     encoded = appendix_text.encode("utf-8")
-    if len(encoded) > MAX_APPENDIX_BYTES:
-        raise CompileError(
-            f"rendered appendix is {len(encoded)} bytes, over the "
-            f"{MAX_APPENDIX_BYTES}-byte limit by {len(encoded) - MAX_APPENDIX_BYTES}; "
-            f"fragments: {', '.join(fragments)}"
-        )
+    for size, limit, unit in (
+        (len(appendix_text), max_chars, "chars"),
+        (len(encoded), MAX_APPENDIX_BYTES, "bytes"),
+    ):
+        if size > limit:
+            raise CompileError(
+                f"rendered appendix is {size} {unit}, over the {limit}-{unit} "
+                f"limit by {size - limit}; fragments: {', '.join(fragments)}"
+            )
     (dest / "SYSTEM_APPENDIX.md").write_bytes(encoded)
 
     settings = dict(spec.get("settings") or {})
@@ -146,7 +157,8 @@ def compile_spec(
         "overlay_dir": str(dest),
         "fragments": fragments,
         "appendix_bytes": len(encoded),
-        "appendix_budget": MAX_APPENDIX_BYTES,
+        "appendix_chars": len(appendix_text),
+        "appendix_budget_chars": max_chars,
         "settings_keys": sorted(settings),
         "skills": copied,
     }
