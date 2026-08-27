@@ -85,7 +85,7 @@ Start from the exact official arXiv title, then:
 - The BibTeX must match the official BibTeX shown on the arXiv page for that paper
 - Do not add explanations, markdown, or extra prose
 
-If you need image understanding or multimodal capabilities, you can call the OpenRouter API (base_url available via the `OPENROUTER_BASE_URL` environment variable, API key available via the `OPENROUTER_API_KEY` environment variable).
+If you need image understanding or multimodal capabilities, you can call the OpenAI-compatible API (base_url available via the `JUDGE_MODEL_URL` environment variable, API key available via the `JUDGE_MODEL_KEY` environment variable).
 
 ## Expected Behavior
 
@@ -514,8 +514,8 @@ workspace/01_Productivity_Flow/task_3_bibtex
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 ```
 
 ## Warmup

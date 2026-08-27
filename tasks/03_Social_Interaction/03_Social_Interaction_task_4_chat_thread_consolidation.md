@@ -70,8 +70,8 @@ def grade(**kwargs) -> dict:
     SLACK_AUDIT_URL = "http://localhost:9110/slack/audit"
     RESULTS_FILE = Path("/tmp_workspace/results/results.md")
 
-    LLM_API_BASE_URL = os.environ["OPENROUTER_BASE_URL"]
-    LLM_API_KEY = os.environ["OPENROUTER_API_KEY"]
+    LLM_API_BASE_URL = os.environ["JUDGE_MODEL_URL"]
+    LLM_API_KEY = os.environ["JUDGE_MODEL_KEY"]
     LLM_MODEL = os.environ.get("JUDGE_MODEL", "openai/gpt-5.4")
 
     scores = {}
@@ -283,8 +283,8 @@ workspace/03_Social_Interaction/task_4_chat_thread_consolidation
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 ## Warmup

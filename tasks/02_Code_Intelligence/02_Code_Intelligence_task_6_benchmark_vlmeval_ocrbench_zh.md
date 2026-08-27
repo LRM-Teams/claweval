@@ -36,8 +36,8 @@ result.json 格式规范：
 
 【相关资源】
 1. OpenRouter接口
-   - base_url: 从环境变量 `OPENROUTER_BASE_URL` 中获取
-   - API Key: 从环境变量 `OPENROUTER_API_KEY` 中获取
+   - base_url: 从环境变量 `JUDGE_MODEL_URL` 中获取
+   - API Key: 从环境变量 `JUDGE_MODEL_KEY` 中获取
 2. OCRBench 数据文件
    - 如果评测过程中需要用到 OCRBench 的 TSV 数据文件，可以直接使用 `/tmp_workspace/OCRBench.tsv`，无需另外下载
 
@@ -156,8 +156,8 @@ workspace/02_Code_Intelligence/task_6_benchmark_vlmeval_ocrbench_zh
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 ```
 
 ## Warmup

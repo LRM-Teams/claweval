@@ -50,7 +50,7 @@ List other notable moments (dangerous attacks, key fouls, near-misses, etc.). Ea
 
 Where `video_timestamp` is the position in the source video in "MM:SS" format (e.g., "17:56"), `type` is the event type (e.g., "goal", "red_card"), and `clip_file` is the corresponding video clip filename.
 
-If you need image/video understanding or multimodal capabilities, you can call the OpenRouter API (base_url available via the `OPENROUTER_BASE_URL` environment variable, API key available via the `OPENROUTER_API_KEY` environment variable).
+If you need image/video understanding or multimodal capabilities, you can call the OpenRouter API (base_url available via the `JUDGE_MODEL_URL` environment variable, API key available via the `JUDGE_MODEL_KEY` environment variable).
 
 ## Expected Behavior
 
@@ -98,7 +98,7 @@ def grade(**kwargs) -> dict:
 
     grading_model = os.environ.get("JUDGE_MODEL", "openai/gpt-5.4")
     from openai import OpenAI
-    client = OpenAI(api_key=os.environ["OPENROUTER_API_KEY"], base_url=os.environ["OPENROUTER_BASE_URL"])
+    client = OpenAI(api_key=os.environ["JUDGE_MODEL_KEY"], base_url=os.environ["JUDGE_MODEL_URL"])
 
     workspace = Path("/tmp_workspace/results")
     scores = {}
@@ -319,8 +319,8 @@ video-frames
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 ## Warmup

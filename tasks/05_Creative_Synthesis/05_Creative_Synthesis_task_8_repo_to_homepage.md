@@ -11,7 +11,7 @@ timeout_seconds: 600
 
 完成网页制作后，使用 Playwright + Headless Chromium 对首页进行完整截图（full page screenshot），将截图保存到 `/tmp_workspace/results/screenshot.png`。截图宽度设为 1440px。
 
-如果需要图像理解或多模态生成能力，可以调用 OpenRouter API（base_url 通过环境变量 `OPENROUTER_BASE_URL` 获取，API Key 通过环境变量 `OPENROUTER_API_KEY` 获取）。
+如果需要图像理解或多模态生成能力，可以调用 OpenRouter API（base_url 通过环境变量 `JUDGE_MODEL_URL` 获取，API Key 通过环境变量 `JUDGE_MODEL_KEY` 获取）。
 
 ## Expected Behavior
 
@@ -36,9 +36,9 @@ def grade(**kwargs) -> dict:
     from openai import OpenAI
     from pathlib import Path
 
-    OPENROUTER_API_KEY = os.environ["OPENROUTER_API_KEY"]
+    JUDGE_MODEL_KEY = os.environ["JUDGE_MODEL_KEY"]
     VLM_MODEL = os.environ.get("JUDGE_MODEL", "openai/gpt-5.4")
-    OPENROUTER_BASE_URL = os.environ["OPENROUTER_BASE_URL"]
+    JUDGE_MODEL_URL = os.environ["JUDGE_MODEL_URL"]
 
     ALL_CRITERIA = [
         "responsive_design",
@@ -52,8 +52,8 @@ def grade(**kwargs) -> dict:
         if model is None:
             model = VLM_MODEL
         client = OpenAI(
-            api_key=OPENROUTER_API_KEY,
-            base_url=OPENROUTER_BASE_URL,
+            api_key=JUDGE_MODEL_KEY,
+            base_url=JUDGE_MODEL_URL,
         )
         for attempt in range(retries + 1):
             try:
@@ -241,8 +241,8 @@ workspace/05_Creative_Synthesis/task_8_repo_to_homepage
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 

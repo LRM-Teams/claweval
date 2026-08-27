@@ -78,8 +78,8 @@ def grade(**kwargs) -> dict:
 
     SLACK_AUDIT_URL = "http://localhost:9110/slack/audit"
     RESULTS_FILE    = Path("/tmp_workspace/results/results.md")
-    OPENROUTER_KEY  = os.environ["OPENROUTER_API_KEY"]
-    OPENROUTER_BASE_URL  = os.environ["OPENROUTER_BASE_URL"]
+    JUDGE_MODEL_KEY  = os.environ["JUDGE_MODEL_KEY"]
+    JUDGE_MODEL_URL  = os.environ["JUDGE_MODEL_URL"]
     JUDGE_MODEL     = os.environ.get("JUDGE_MODEL", "openai/gpt-5.4")
 
     # ── weights (raw, will be normalised) ──
@@ -455,8 +455,8 @@ PREDICTED ANSWER:
             "{\"score\": <float 0.0-1.0>, \"reason\": \"<brief reason>\"}"
         )
         client = OpenAI(
-            api_key=OPENROUTER_KEY,
-            base_url=OPENROUTER_BASE_URL,
+            api_key=JUDGE_MODEL_KEY,
+            base_url=JUDGE_MODEL_URL,
         )
         for attempt in range(retries):
             try:
@@ -478,7 +478,7 @@ PREDICTED ANSWER:
 
     llm_earned  = 0.0
     llm_detail  = {}
-    if OPENROUTER_KEY:
+    if JUDGE_MODEL_KEY:
         for item in LLM_ITEMS:
             result   = llm_judge(item["prompt"](pred))
             raw      = result.get("score", 0.0)
@@ -552,8 +552,8 @@ workspace/03_Social_Interaction/task_2_chat_action_extraction
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 ## Warmup

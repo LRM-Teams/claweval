@@ -27,7 +27,7 @@ timeout_seconds: 1200
 - `/tmp_workspace/results/` 目录下包含完整的静态网页源码
 - `/tmp_workspace/results/screenshot.png` 为最终主页首页的完整截图
 
-如果需要图像理解或多模态生成能力，可以调用 OpenRouter API（base_url 通过环境变量 `OPENROUTER_BASE_URL` 获取，API Key 通过环境变量 `OPENROUTER_API_KEY` 获取）。
+如果需要图像理解或多模态生成能力，可以调用 OpenRouter API（base_url 通过环境变量 `JUDGE_MODEL_URL` 获取，API Key 通过环境变量 `JUDGE_MODEL_KEY` 获取）。
 
 ## Expected Behavior
 
@@ -198,8 +198,8 @@ def grade(**kwargs) -> dict:
         from openai import OpenAI
 
         client = OpenAI(
-            api_key=os.environ["OPENROUTER_API_KEY"],
-            base_url=os.environ["OPENROUTER_BASE_URL"],
+            api_key=os.environ["JUDGE_MODEL_KEY"],
+            base_url=os.environ["JUDGE_MODEL_URL"],
         )
 
         judge_prompt = (
@@ -334,8 +334,8 @@ workspace/02_Code_Intelligence/task_10_acad_homepage_zh
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 

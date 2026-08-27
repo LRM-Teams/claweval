@@ -13,7 +13,7 @@ It is now mid-July 2025. Where can I go to view this painting?
 
 - Save the results into `/tmp_workspace/results/results.md`.
 
-If you need image understanding or multimodal capabilities, you can call the OpenRouter API (base_url available via the `OPENROUTER_BASE_URL` environment variable, API key available via the `OPENROUTER_API_KEY` environment variable).
+If you need image understanding or multimodal capabilities, you can call the OpenRouter API (base_url available via the `JUDGE_MODEL_URL` environment variable, API key available via the `JUDGE_MODEL_KEY` environment variable).
 
 ## Expected Behavior
 
@@ -71,8 +71,8 @@ def grade(**kwargs) -> dict:
         from openai import OpenAI
 
         client = OpenAI(
-            api_key=os.environ["OPENROUTER_API_KEY"],
-            base_url=os.environ["OPENROUTER_BASE_URL"],
+            api_key=os.environ["JUDGE_MODEL_KEY"],
+            base_url=os.environ["JUDGE_MODEL_URL"],
         )
 
         gt_description = "Museum of Art Pudong, Shanghai（浦东美术馆）"
@@ -152,8 +152,8 @@ agent-browser
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 

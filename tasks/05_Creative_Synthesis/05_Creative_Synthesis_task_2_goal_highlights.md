@@ -39,7 +39,7 @@ Based on this video, compile a **goal highlights reel for Barcelona's #7 Ferran 
 
 Where `source_start` and `source_end` are positions in the source video file in "MM:SS" format (e.g., "17:50" to "18:02").
 
-If you need image/video understanding or multimodal capabilities, you can call the OpenRouter API (base_url available via the `OPENROUTER_BASE_URL` environment variable, API key available via the `OPENROUTER_API_KEY` environment variable).
+If you need image/video understanding or multimodal capabilities, you can call the OpenRouter API (base_url available via the `JUDGE_MODEL_URL` environment variable, API key available via the `JUDGE_MODEL_KEY` environment variable).
 
 ## Expected Behavior
 
@@ -179,7 +179,7 @@ def grade(**kwargs) -> dict:
     try:
         import base64
         from openai import OpenAI
-        client = OpenAI(api_key=os.environ["OPENROUTER_API_KEY"], base_url=os.environ["OPENROUTER_BASE_URL"])
+        client = OpenAI(api_key=os.environ["JUDGE_MODEL_KEY"], base_url=os.environ["JUDGE_MODEL_URL"])
 
         num_samples = min(6, max(3, int(duration)))
         interval = duration / (num_samples + 1)
@@ -271,8 +271,8 @@ video-frames
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 ## Warmup

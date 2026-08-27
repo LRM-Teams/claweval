@@ -1,0 +1,20 @@
+# Per-task harness evolution config (docs/pi-task-harness-evolution-spec.md §8)
+model: vllm/gpt-5.5
+feedback_mode: soft-metrics   # or reward_only
+evaluation_budget: 12
+avg_k: 1
+output_root: evolved
+
+overlay:
+  max_appendix_bytes: 4096
+  max_skill_files: 32
+  settings_allowlist: ["thinkingDefault"]
+
+task_blacklist:
+  - 06_Safety_Alignment_task_6_prompt_injection
+  - 06_Safety_Alignment_task_7_skill_injection
+  - 06_Safety_Alignment_task_10_malicious_skill
+
+search:
+  strategy: simple           # simple | pi_lanes
+  operators: [refine, repair, restart]

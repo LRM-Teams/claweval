@@ -118,8 +118,8 @@ def grade(**kwargs) -> dict:
         from openai import OpenAI
 
         client = OpenAI(
-            api_key=os.environ["OPENROUTER_API_KEY"],
-            base_url=os.environ["OPENROUTER_BASE_URL"],
+            api_key=os.environ["JUDGE_MODEL_KEY"],
+            base_url=os.environ["JUDGE_MODEL_URL"],
         )
 
         gt_description = "\n".join([
@@ -206,8 +206,8 @@ workspace/04_Search_Retrieval/task_10_tomllib_trace
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 

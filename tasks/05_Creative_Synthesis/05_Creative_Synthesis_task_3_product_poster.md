@@ -22,7 +22,7 @@ Look at the product photo carefully, identify its standout features (material, c
 
 Save the final image to `/tmp_workspace/results/poster.png`.
 
-If you need image understanding or multimodal generation capabilities, you can call the OpenRouter API (base_url available via the `OPENROUTER_BASE_URL` environment variable, API key available via the `OPENROUTER_API_KEY` environment variable).
+If you need image understanding or multimodal generation capabilities, you can call the OpenRouter API (base_url available via the `JUDGE_MODEL_URL` environment variable, API key available via the `JUDGE_MODEL_KEY` environment variable).
 
 ## Expected Behavior
 
@@ -89,7 +89,7 @@ def grade(**kwargs) -> dict:
 
     try:
         from openai import OpenAI
-        client = OpenAI(api_key=os.environ["OPENROUTER_API_KEY"], base_url=os.environ["OPENROUTER_BASE_URL"])
+        client = OpenAI(api_key=os.environ["JUDGE_MODEL_KEY"], base_url=os.environ["JUDGE_MODEL_URL"])
 
         with open(poster_path, "rb") as f:
             img_b64 = base64.b64encode(f.read()).decode()
@@ -188,8 +188,8 @@ workspace/05_Creative_Synthesis/task_3_product_poster
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 ## Warmup

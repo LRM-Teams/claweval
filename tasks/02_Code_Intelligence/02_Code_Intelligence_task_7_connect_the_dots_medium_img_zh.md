@@ -17,7 +17,7 @@ timeout_seconds: 1200
 要求：
 1. `/tmp_workspace/results/result.png`：连线完成后的图片（在原图上按编号顺序用线段连接所有点后的结果）
 
-如果需要图像理解或多模态生成能力，可以调用 OpenRouter API（base_url 通过环境变量 `OPENROUTER_BASE_URL` 获取，API Key 通过环境变量 `OPENROUTER_API_KEY` 获取）。
+如果需要图像理解或多模态生成能力，可以调用 OpenRouter API（base_url 通过环境变量 `JUDGE_MODEL_URL` 获取，API Key 通过环境变量 `JUDGE_MODEL_KEY` 获取）。
 
 ## Expected Behavior
 
@@ -70,8 +70,8 @@ def grade(**kwargs) -> dict:
     try:
         from openai import OpenAI
         client = OpenAI(
-            api_key=os.environ["OPENROUTER_API_KEY"],
-            base_url=os.environ["OPENROUTER_BASE_URL"],
+            api_key=os.environ["JUDGE_MODEL_KEY"],
+            base_url=os.environ["JUDGE_MODEL_URL"],
         )
     except Exception as e:
         log.error("OpenAI client initialization failed: %s", e)
@@ -167,8 +167,8 @@ workspace/02_Code_Intelligence/task_7_connect_the_dots_medium_img_zh
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 ## Warmup

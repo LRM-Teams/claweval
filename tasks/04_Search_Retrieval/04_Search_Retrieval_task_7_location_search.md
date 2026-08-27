@@ -16,7 +16,7 @@ Help me determine the location shown in the image and return the country, city, 
 
 - Save the results into `/tmp_workspace/results/results.md`.
 
-If you need image understanding or multimodal capabilities, you can call the OpenRouter API (base_url available via the `OPENROUTER_BASE_URL` environment variable, API key available via the `OPENROUTER_API_KEY` environment variable).
+If you need image understanding or multimodal capabilities, you can call the OpenRouter API (base_url available via the `JUDGE_MODEL_URL` environment variable, API key available via the `JUDGE_MODEL_KEY` environment variable).
 
 ## Expected Behavior
 
@@ -76,8 +76,8 @@ def grade(**kwargs) -> dict:
         from openai import OpenAI
 
         client = OpenAI(
-            api_key=os.environ["OPENROUTER_API_KEY"],
-            base_url=os.environ["OPENROUTER_BASE_URL"],
+            api_key=os.environ["JUDGE_MODEL_KEY"],
+            base_url=os.environ["JUDGE_MODEL_URL"],
         )
 
         gt_description = {"country": "中国", "city": "上海", "latitude": 31.16, "longitude": 121.46}
@@ -158,8 +158,8 @@ agent-browser
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 

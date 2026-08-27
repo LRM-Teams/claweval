@@ -17,7 +17,7 @@ Please watch this video carefully and produce a **comprehensive set of study not
 - Format: Markdown
 - Length: at least 800 words, no more than 3000 words
 
-If you need video understanding or multimodal capabilities, you can call the OpenRouter API (base_url available via the `OPENROUTER_BASE_URL` environment variable, API key available via the `OPENROUTER_API_KEY` environment variable).
+If you need video understanding or multimodal capabilities, you can call the OpenRouter API (base_url available via the `JUDGE_MODEL_URL` environment variable, API key available via the `JUDGE_MODEL_KEY` environment variable).
 
 ## Expected Behavior
 
@@ -101,7 +101,7 @@ def grade(**kwargs) -> dict:
     cp_scores = {}
     try:
         from openai import OpenAI
-        client = OpenAI(api_key=os.environ["OPENROUTER_API_KEY"], base_url=os.environ["OPENROUTER_BASE_URL"])
+        client = OpenAI(api_key=os.environ["JUDGE_MODEL_KEY"], base_url=os.environ["JUDGE_MODEL_URL"])
 
         checkpoint_list = "\n".join(
             f"- **{key}**: {desc}" for key, desc in checkpoints.items()
@@ -174,8 +174,8 @@ video-frames
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 ## Warmup

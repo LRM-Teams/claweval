@@ -77,8 +77,8 @@ def grade(**kwargs) -> dict:
         from openai import OpenAI
 
         client = OpenAI(
-            api_key=os.environ["OPENROUTER_API_KEY"],
-            base_url=os.environ["OPENROUTER_BASE_URL"],
+            api_key=os.environ["JUDGE_MODEL_KEY"],
+            base_url=os.environ["JUDGE_MODEL_URL"],
         )
 
         judge_prompt = f"""你是一位评分裁判, 请你依据“评分标准”为“模型回答”进行打分。
@@ -155,8 +155,8 @@ agent-browser
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 

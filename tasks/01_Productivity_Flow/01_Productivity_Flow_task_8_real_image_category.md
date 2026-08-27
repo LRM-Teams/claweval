@@ -26,7 +26,7 @@ timeout_seconds: 600
 3. 将压缩包中的所有图片按类别分别放入对应的子目录中。
 4. 请保持每张图片原有的文件名不变。
 
-如果需要图像理解或多模态生成能力，可以调用 OpenRouter API（base_url 通过环境变量 `OPENROUTER_BASE_URL` 获取，API Key 通过环境变量 `OPENROUTER_API_KEY` 获取）。
+如果需要图像理解或多模态生成能力，可以调用 OpenAI 兼容 API（base_url 通过环境变量 `JUDGE_MODEL_URL` 获取，API Key 通过环境变量 `JUDGE_MODEL_KEY` 获取）。
 
 ## Expected Behavior
 
@@ -189,8 +189,8 @@ workspace/01_Productivity_Flow/task_8_real_image_category
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 ```
 
 ## Warmup

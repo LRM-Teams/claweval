@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for f:*)",
+      "Bash(do sed:*)",
+      "Bash(do echo:*)"
+    ]
+  }
+}

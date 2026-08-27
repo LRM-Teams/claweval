@@ -12,16 +12,35 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 TMP_WORKSPACE = os.environ.get("TMP_WORKSPACE", "/tmp_workspace")
+GRADING_TRANSCRIPT_PATH = "/tmp/_grade_transcript.jsonl"
 
 
-def run_grading(task_id: str, automated_checks: str, output_dir: Path) -> dict:
+def run_grading(
+    task_id: str,
+    automated_checks: str,
+    output_dir: Path,
+    transcript_path: Path | None = None,
+) -> dict:
     logger.info("[%s] Starting in-container grading...", task_id)
 
     runner_code = "\n".join([
         "import json, sys",
         automated_checks,
         "",
-        f'result = grade(transcript=[], workspace_path="{TMP_WORKSPACE}")',
+        "transcript = []",
+        "try:",
+        f'    with open("{GRADING_TRANSCRIPT_PATH}", encoding="utf-8", errors="ignore") as transcript_file:',
+        "        for line in transcript_file:",
+        "            line = line.strip()",
+        "            if not line:",
+        "                continue",
+        "            try:",
+        "                transcript.append(json.loads(line))",
+        "            except json.JSONDecodeError as exc:",
+        '                transcript.append({"raw": line, "parse_error": str(exc)})',
+        "except FileNotFoundError:",
+        "    pass",
+        f'result = grade(transcript=transcript, workspace_path="{TMP_WORKSPACE}")',
         "print(json.dumps(result))",
     ]) + "\n"
 
@@ -32,6 +51,24 @@ def run_grading(task_id: str, automated_checks: str, output_dir: Path) -> dict:
         tmp_host = f.name
 
     try:
+        if transcript_path is not None:
+            transcript_path = Path(transcript_path)
+            if not transcript_path.is_file():
+                return {"error": f"grading transcript not found: {transcript_path}"}
+            r = subprocess.run(
+                [
+                    "docker",
+                    "cp",
+                    str(transcript_path),
+                    f"{task_id}:{GRADING_TRANSCRIPT_PATH}",
+                ],
+                capture_output=True,
+                text=True,
+            )
+            if r.returncode != 0:
+                logger.error("[%s] transcript docker cp failed: %s", task_id, r.stderr)
+                return {"error": f"transcript docker cp failed: {r.stderr}"}
+
         r = subprocess.run(
             ["docker", "cp", tmp_host, f"{task_id}:/tmp/_grade_runner.py"],
             capture_output=True, text=True,

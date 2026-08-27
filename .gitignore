@@ -36,3 +36,14 @@ grocery/
 cookies.txt
 output.rar
 output_qwen.rar
+
+# harness evolution artifacts (keep dir, ignore contents)
+evolved/*
+!evolved/.gitkeep
+
+.venv/
+.opencode/
+model_result/
+*.log
+*.bak
+.env_bak

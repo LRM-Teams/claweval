@@ -1,0 +1,8 @@
+{
+  "image": "pi-agent-wildclawbench-1.0:latest",
+  "platform": "linux/amd64",
+  "pi_version": "0.84.2",
+  "source_image_id": "sha256:85a29b3c143cee90693171d333c373cc2f1a8fd396a3edd5788101fd2a0185eb",
+  "python": "3.x",
+  "requirements": "requirements.lock"
+}

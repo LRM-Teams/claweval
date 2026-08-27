@@ -1,0 +1,8 @@
+{
+  "pi_version": "0.84.2",
+  "print_flag": "--print",
+  "json_mode": ["--mode", "json"],
+  "session_isolation": "--session-dir",
+  "thinking_levels": ["off", "minimal", "low", "medium", "high", "xhigh", "max"],
+  "launcher": "/usr/local/bin/pi_launcher.py"
+}

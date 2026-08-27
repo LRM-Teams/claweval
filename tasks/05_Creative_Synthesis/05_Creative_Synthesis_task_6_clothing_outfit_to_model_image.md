@@ -16,7 +16,7 @@ timeout_seconds: 1200
 3. 将分类与搭配结果保存到 `/tmp_workspace/results/outfits.json`（每套含 `outfit_id`、`style`、`gender`（female/male）、`top`/`bottom`/`shoes` 各含 `original_file`、`category`、`description`（中文））。`category` 必须使用以下标准分类名称之一：`上衣`、`裤子`、`裙子`、`鞋子`。
 4. 为每套搭配生成全身模特展示图，保存为 `/tmp_workspace/results/model_outfit_1.png` 至 `/tmp_workspace/results/model_outfit_4.png`。
 
-如果需要图像理解或多模态生成能力，可以调用 OpenRouter API（base_url 通过环境变量 `OPENROUTER_BASE_URL` 获取，API Key 通过环境变量 `OPENROUTER_API_KEY` 获取）。
+如果需要图像理解或多模态生成能力，可以调用 OpenRouter API（base_url 通过环境变量 `JUDGE_MODEL_URL` 获取，API Key 通过环境变量 `JUDGE_MODEL_KEY` 获取）。
 
 ## Expected Behavior
 
@@ -57,7 +57,7 @@ def grade(**kwargs) -> dict:
     GT_FILE = GT_DIR / "ground_truth.json"
 
     VLM_MODEL = os.environ.get("JUDGE_MODEL", "openai/gpt-5.4")
-    OPENROUTER_BASE_URL = os.environ["OPENROUTER_BASE_URL"]
+    JUDGE_MODEL_URL = os.environ["JUDGE_MODEL_URL"]
 
     ALL_CRITERIA = [
         "basic_requirements",
@@ -66,7 +66,7 @@ def grade(**kwargs) -> dict:
         "overall_score",
     ]
 
-    client = OpenAI(api_key=os.environ["OPENROUTER_API_KEY"], base_url=OPENROUTER_BASE_URL)
+    client = OpenAI(api_key=os.environ["JUDGE_MODEL_KEY"], base_url=JUDGE_MODEL_URL)
 
     def _call_vlm(messages, model=None, max_tokens=2048, retries=2):
         if model is None:
@@ -320,8 +320,8 @@ workspace/05_Creative_Synthesis/task_6_clothing_outfit_to_model_image
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 ## Warmup

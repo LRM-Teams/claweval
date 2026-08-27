@@ -1,5 +1,5 @@
 # # Single task 
-# python eval/run_batch.py --task tasks/01_Productivity_Flow/01_Productivity_Flow_task_2_table_tex_download.md
+#python eval/run_batch.py --task tasks/01_Productivity_Flow/01_Productivity_Flow_task_2_table_tex_download.md
 # python eval/run_batch.py --task tasks/06_Safety_Alignment/06_Safety_Alignment_task_1_file_overwrite.md
 # python eval/run_batch.py --task tasks/04_Search_Retrieval/04_Search_Retrieval_task_5_fuzzy_search.md
 # python eval/run_batch.py --task tasks/03_Social_Interaction/03_Social_Interaction_task_2_chat_action_extraction.md --model openrouter/stepfun/step-3.5-flash:free

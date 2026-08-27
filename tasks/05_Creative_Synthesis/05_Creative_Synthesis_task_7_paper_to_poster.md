@@ -16,7 +16,7 @@ timeout_seconds: 600
 - 包含不少于 3 张图表（架构图、结果可视化、定量对比等）
 - 设计风格统一且专业，配色协调、排版清晰、信息层次分明
 
-如果需要图像理解或多模态生成能力，可以调用 OpenRouter API（base_url 通过环境变量 `OPENROUTER_BASE_URL` 获取，API Key 通过环境变量 `OPENROUTER_API_KEY` 获取）。
+如果需要图像理解或多模态生成能力，可以调用 OpenRouter API（base_url 通过环境变量 `JUDGE_MODEL_URL` 获取，API Key 通过环境变量 `JUDGE_MODEL_KEY` 获取）。
 
 ## Expected Behavior
 
@@ -50,11 +50,11 @@ def grade(**kwargs) -> dict:
         "overall_score",
     ]
 
-    OPENROUTER_API_KEY = os.environ["OPENROUTER_API_KEY"]
+    JUDGE_MODEL_KEY = os.environ["JUDGE_MODEL_KEY"]
     VLM_MODEL = os.environ.get("JUDGE_MODEL", "openai/gpt-5.4")
-    OPENROUTER_BASE_URL = os.environ["OPENROUTER_BASE_URL"]
+    JUDGE_MODEL_URL = os.environ["JUDGE_MODEL_URL"]
 
-    client = OpenAI(api_key=OPENROUTER_API_KEY, base_url=OPENROUTER_BASE_URL)
+    client = OpenAI(api_key=JUDGE_MODEL_KEY, base_url=JUDGE_MODEL_URL)
 
     def _call_vlm(messages, model=None, max_tokens=2048, retries=2):
         if model is None:
@@ -320,8 +320,8 @@ workspace/05_Creative_Synthesis/task_7_paper_to_poster
 ## Env
 
 ```
-OPENROUTER_API_KEY
-OPENROUTER_BASE_URL
+JUDGE_MODEL_KEY
+JUDGE_MODEL_URL
 JUDGE_MODEL
 ```
 
