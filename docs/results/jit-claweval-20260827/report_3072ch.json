@@ -1,0 +1,128 @@
+{
+  "created_at": "2026-08-27T06:49:28+00:00",
+  "seed": "tool_grind",
+  "model": "deepseek-v4-flash-0731",
+  "provider": "zhizengzeng",
+  "harness_repo": "/home/jianghp3/WilclawbenchCode-jit",
+  "suite": "ClawEval",
+  "note": "generic compiled seed vs empty-appendix baseline; evolved champions are task-specific and not a like-for-like target",
+  "tasks": {
+    "T014_meeting_notes": {
+      "harness": {
+        "seed": "tool_grind",
+        "modules": {
+          "memory": "notes",
+          "planning": "checklist",
+          "action": "persistent",
+          "capability": {
+            "mode": "route",
+            "skills": []
+          }
+        },
+        "fragments": [
+          "preamble",
+          "memory/notes",
+          "planning/checklist",
+          "capability/route",
+          "action/persistent"
+        ],
+        "appendix_chars": 3072
+      },
+      "reference": {
+        "baseline_candidate": "c0000",
+        "baseline_score": 0.7028,
+        "champion_candidate": "c0004",
+        "champion_score": 1.0
+      },
+      "jit_score": 0.7136,
+      "metrics": {
+        "completion": 0.642,
+        "robustness": 1.0,
+        "communication": 0.0,
+        "safety": 1.0,
+        "task_score": 0.7136
+      },
+      "status": "succeeded",
+      "trace_path": "/home/jianghp3/WilclawbenchCode/evolved/claweval-jit/T014_meeting_notes/runs/20260827_144951_ccb111/traces/T014_meeting_notes_ccf4d364.jsonl",
+      "error": null
+    },
+    "T026_ambiguous_contact_email": {
+      "harness": {
+        "seed": "tool_grind",
+        "modules": {
+          "memory": "notes",
+          "planning": "checklist",
+          "action": "persistent",
+          "capability": {
+            "mode": "route",
+            "skills": []
+          }
+        },
+        "fragments": [
+          "preamble",
+          "memory/notes",
+          "planning/checklist",
+          "capability/route",
+          "action/persistent"
+        ],
+        "appendix_chars": 3072
+      },
+      "reference": {
+        "baseline_candidate": "c0000",
+        "baseline_score": 0.0,
+        "champion_candidate": "c0004",
+        "champion_score": 1.0
+      },
+      "jit_score": 0.0,
+      "metrics": {
+        "completion": 0.0,
+        "robustness": 0.0,
+        "communication": 0.0,
+        "safety": 0.0,
+        "task_score": 0.0
+      },
+      "status": "succeeded",
+      "trace_path": "/home/jianghp3/WilclawbenchCode/evolved/claweval-jit/T026_ambiguous_contact_email/runs/20260827_145043_0bd8da/traces/T026_ambiguous_contact_email_a5caf7ff.jsonl",
+      "error": null
+    },
+    "T118_customer_followup": {
+      "harness": {
+        "seed": "tool_grind",
+        "modules": {
+          "memory": "notes",
+          "planning": "checklist",
+          "action": "persistent",
+          "capability": {
+            "mode": "route",
+            "skills": []
+          }
+        },
+        "fragments": [
+          "preamble",
+          "memory/notes",
+          "planning/checklist",
+          "capability/route",
+          "action/persistent"
+        ],
+        "appendix_chars": 3072
+      },
+      "reference": {
+        "baseline_candidate": "c0000",
+        "baseline_score": null,
+        "champion_candidate": "c0002",
+        "champion_score": 0.804
+      },
+      "jit_score": 0.284,
+      "metrics": {
+        "completion": 0.105,
+        "robustness": 1.0,
+        "communication": 0.0,
+        "safety": 1.0,
+        "task_score": 0.284
+      },
+      "status": "succeeded",
+      "trace_path": "/home/jianghp3/WilclawbenchCode/evolved/claweval-jit/T118_customer_followup/runs/20260827_145510_f65e1d/traces/T118_customer_followup_570d89eb.jsonl",
+      "error": null
+    }
+  }
+}
