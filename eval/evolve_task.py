@@ -26,12 +26,12 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-import yaml
 from dotenv import load_dotenv
 
 from utils.evolution_adapter import WildClawEvaluationAdapter
 from utils.evolution_feedback import FEEDBACK_MODES, write_feedback
 from utils.harness_overlay import OverlayValidationError, validate_overlay
+from utils.harness_policy import load_task_blacklist
 from utils.run_artifacts import atomic_write_json
 from utils.task_parser import parse_task_md
 
@@ -44,29 +44,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_CONFIG = ROOT_DIR / "configs" / "evolve" / "example.yaml"
-DEFAULT_TASK_BLACKLIST = (
-    "06_Safety_Alignment_task_6_prompt_injection",
-    "06_Safety_Alignment_task_7_skill_injection",
-    "06_Safety_Alignment_task_10_malicious_skill",
-)
 AGENT_LOG_MAX_BYTES = 200_000
 
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
-
-
-def load_task_blacklist(config_path: Path = DEFAULT_CONFIG) -> list[str]:
-    if config_path.is_file():
-        try:
-            config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
-            blacklist = config.get("task_blacklist")
-            if isinstance(blacklist, list):
-                return [str(item) for item in blacklist]
-        except yaml.YAMLError as exc:
-            logger.warning("Failed to parse %s: %s", config_path, exc)
-    return list(DEFAULT_TASK_BLACKLIST)
 
 
 class TaskArchive:

@@ -21,8 +21,14 @@ import shutil
 from pathlib import Path
 from typing import Any, Mapping
 
-from .harness_overlay import MAX_APPENDIX_BYTES, MAX_SKILL_FILES
-from .harness_spec import NULL_VALUES, SPEC_FILENAME, dump_spec, validate_spec
+from .harness_overlay import MAX_APPENDIX_BYTES, MAX_SKILL_FILES, validate_overlay
+from .harness_spec import (
+    NULL_VALUES,
+    SPEC_FILENAME,
+    default_task_type,
+    dump_spec,
+    validate_spec,
+)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES_ROOT = REPO_ROOT / "harness" / "templates"
@@ -205,3 +211,53 @@ def seed_spec(
             "seed_name": name,
         }
     )
+
+
+def build_task_overlay(
+    task: Mapping[str, Any],
+    dest: str | Path,
+    *,
+    seed: str | None = None,
+    spec: Mapping[str, Any] | None = None,
+    task_type: str | None = None,
+) -> dict:
+    """Compile an overlay for a parsed task, from a named seed or a given spec.
+
+    This is the ``--jit-harness`` entry point. It resolves the capability
+    registry ``C_τ`` first, so a spec requesting a skill this task cannot mount
+    fails offline (L1) rather than at container time.
+    """
+    from .harness_registry import available_skills, build_registry, skill_sources
+
+    if (seed is None) == (spec is None):
+        raise CompileError("build_task_overlay needs exactly one of seed or spec")
+
+    registry = build_registry(task)
+    task_type = task_type or default_task_type(task.get("category", ""))
+
+    candidate = (
+        seed_spec(seed, task_id=task["task_id"], task_type=task_type)
+        if seed is not None
+        else spec
+    )
+    # Seeds go through the registry check too: a seed that mounts a skill the
+    # task cannot provide must fail here, not inside the container.
+    resolved = validate_spec(candidate, available_skills=available_skills(registry))
+
+    audit = compile_spec(
+        resolved,
+        dest,
+        task_skills=skill_sources(
+            resolved["modules"]["capability"]["skills"], registry
+        ),
+        validate=False,
+    )
+    validate_overlay(dest)
+    audit["registry"] = {
+        "mountable": registry["mountable"],
+        "task_skills": registry["task_skills"],
+        "env_missing": registry["env_missing"],
+    }
+    audit["seed_name"] = seed
+    audit["task_type"] = task_type
+    return audit

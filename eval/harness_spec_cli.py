@@ -5,7 +5,9 @@ Everything this does is L1-L3 (schema, compile, overlay) from
 docs/jit-harness-spec.md §8 -- no container, no API call.
 
     python3 eval/harness_spec_cli.py seeds
-    python3 eval/harness_spec_cli.py show tool_grind
+    python3 eval/harness_spec_cli.py registry --task tasks/<cat>/<task>.md
+    python3 eval/harness_spec_cli.py show --seed tool_grind --task-id t \
+        --task-type productivity_crawl
     python3 eval/harness_spec_cli.py compile --seed tool_grind \
         --task-id 03_Chat_Tool_task_1_meeting --task-type productivity_crawl \
         --dest /tmp/overlay
@@ -30,7 +32,9 @@ from utils.harness_compile import (  # noqa: E402
     seed_spec,
 )
 from utils.harness_overlay import OverlayValidationError, validate_overlay
+from utils.harness_registry import build_registry  # noqa: E402
 from utils.harness_spec import SpecValidationError, load_spec, module_signature
+from utils.task_parser import parse_task_md  # noqa: E402
 
 
 def _resolve_spec(args: argparse.Namespace) -> dict:
@@ -66,6 +70,12 @@ def cmd_compile(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_registry(args: argparse.Namespace) -> int:
+    task = parse_task_md(Path(args.task))
+    print(json.dumps(build_registry(task), indent=2, ensure_ascii=False))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -73,6 +83,12 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("seeds", help="list the named seed combinations").set_defaults(
         func=cmd_seeds
     )
+
+    p_registry = sub.add_parser(
+        "registry", help="print the capability registry C_tau for a task"
+    )
+    p_registry.add_argument("--task", required=True, help="path to a task.md")
+    p_registry.set_defaults(func=cmd_registry)
 
     for name, func, help_text in (
         ("show", cmd_show, "print a spec and its rendered appendix"),

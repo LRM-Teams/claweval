@@ -6,6 +6,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 import json
 import uuid
@@ -54,6 +55,8 @@ from utils.harness_overlay import (
     overlay_summary,
     validate_overlay,
 )
+from utils.harness_compile import CompileError, build_task_overlay, load_seeds
+from utils.harness_policy import assert_task_allowed
 from utils.pi_harness import (
     build_pi_command,
     build_pi_models_config,
@@ -427,8 +430,12 @@ def run_single_task(
     output_price: float = None,
     cache_read_price: float = None,
     evolved_harness: str | None = None,
+    jit_harness: str | None = None,
 ) -> dict:
     task_id_ori = task["task_id"]
+
+    if evolved_harness and jit_harness:
+        raise ValueError("--evolved-harness and --jit-harness are mutually exclusive")
 
     overlay_dir = None
     overlay_appendix = None
@@ -455,6 +462,24 @@ def run_single_task(
 
     output_dir = OUTPUT_DIR / task["category"] / f"{task_id_ori}" / f"{suffix}"
     initialize_run_artifacts(output_dir)
+
+    if jit_harness:
+        # Compile into the run's own artifact tree so the overlay that actually
+        # ran is recoverable from the results alone.
+        jit_dest = output_dir / "task_output" / "harness" / "overlay"
+        jit_audit = build_task_overlay(task, jit_dest, seed=jit_harness)
+        atomic_write_json(
+            output_dir / "task_output" / "harness" / "spec_compile.json", jit_audit
+        )
+        overlay_dir = jit_dest
+        overlay_appendix = load_system_appendix(overlay_dir)
+        logger.info(
+            "[%s] JIT harness compiled: seed=%s fragments=%s appendix=%dB",
+            task_id_ori,
+            jit_harness,
+            ",".join(jit_audit["fragments"]),
+            jit_audit["appendix_bytes"],
+        )
 
     result = {"task_id": task_id, "scores": {}, "error": None, "output_dir": str(output_dir)}
     gateway_proc = None
@@ -487,7 +512,8 @@ def run_single_task(
         if harness is HarnessKind.OPENCLAW:
             if overlay_dir is not None:
                 raise RuntimeError(
-                    "--evolved-harness is only supported for the Pi harness"
+                    "--evolved-harness/--jit-harness are only supported for the "
+                    "Pi harness"
                 )
             if lobster:
                 inject_lobster_workspace(task_id, lobster["workspace"])
@@ -838,18 +864,39 @@ Examples:
         help="Path to an evolved harness overlay for this task (Pi only), e.g. "
         "evolved/<task_id>/champion or a directory containing overlay/",
     )
+    parser.add_argument(
+        "--jit-harness",
+        default=None,
+        metavar="SEED",
+        help="Compile a harness overlay for this task from a named seed (Pi "
+        f"only). Seeds: {', '.join(sorted(load_seeds()))}",
+    )
 
     args = parser.parse_args()
 
-    if args.evolved_harness and args.category:
-        logger.error("--evolved-harness is per-task only; use it with --task")
+    if args.evolved_harness and args.jit_harness:
+        logger.error("--evolved-harness and --jit-harness are mutually exclusive")
         sys.exit(1)
+    for flag, value in (
+        ("--evolved-harness", args.evolved_harness),
+        ("--jit-harness", args.jit_harness),
+    ):
+        if value and args.category:
+            logger.error("%s is per-task only; use it with --task", flag)
+            sys.exit(1)
     if args.evolved_harness:
         try:
             validate_overlay(args.evolved_harness)
         except ValueError as exc:
             logger.error("Invalid evolved harness: %s", exc)
             sys.exit(1)
+    if args.jit_harness and args.jit_harness not in load_seeds():
+        logger.error(
+            "Unknown --jit-harness seed %r (available: %s)",
+            args.jit_harness,
+            ", ".join(sorted(load_seeds())),
+        )
+        sys.exit(1)
 
     # Override OUTPUT_DIR if provided
     global OUTPUT_DIR
@@ -904,6 +951,19 @@ Examples:
         task = parse_task_md(task_file)
         logger.info("Single task mode: %s", task["task_id"])
 
+        if args.jit_harness:
+            # Dry-run the whole offline pipeline (L1-L3) before anything starts,
+            # so a bad seed or missing skill costs nothing.
+            try:
+                assert_task_allowed(task["task_id"], flag="--jit-harness")
+                with tempfile.TemporaryDirectory() as probe:
+                    build_task_overlay(
+                        task, Path(probe) / "overlay", seed=args.jit_harness
+                    )
+            except (ValueError, CompileError) as exc:
+                logger.error("Cannot build JIT harness: %s", exc)
+                sys.exit(1)
+
         if args.resume:
             short_model = re.sub(
                 r"[^a-zA-Z0-9.\-_]", "_", args.model.rsplit("/", 1)[-1]
@@ -926,6 +986,7 @@ Examples:
             output_price=args.output_price,
             cache_read_price=args.cache_read_price,
             evolved_harness=args.evolved_harness,
+            jit_harness=args.jit_harness,
         )
         return
     if args.category.lower() == "all":

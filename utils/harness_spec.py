@@ -42,6 +42,18 @@ TASK_TYPES = (
     "productivity_crawl",
 )
 
+# Coarse category -> task_type default, used when no generator has assigned one
+# (P4.2). It is deliberately incomplete: 06_Safety_Alignment has no entry
+# because none of the declared task types describe it, so those tasks must name
+# a type explicitly rather than be silently mislabelled.
+CATEGORY_TASK_TYPE = {
+    "01_Productivity_Flow": "productivity_crawl",
+    "02_Code_Intelligence": "code_repo",
+    "03_Social_Interaction": "chat_extract",
+    "04_Search_Retrieval": "search_deep",
+    "05_Creative_Synthesis": "creative_media",
+}
+
 SETTINGS_ALLOWLIST = ("thinkingDefault",)
 THINKING_VALUES = ("low", "medium", "high")
 
@@ -211,6 +223,17 @@ def _validate_settings(settings: Any) -> dict:
             settings["thinkingDefault"], THINKING_VALUES, "settings.thinkingDefault"
         )
     return dict(settings)
+
+
+def default_task_type(category: str) -> str:
+    """Best-effort ``task_type`` for a category, for use before P4.3."""
+    try:
+        return CATEGORY_TASK_TYPE[category]
+    except KeyError:
+        raise SpecValidationError(
+            f"no default task_type for category {category!r}; "
+            f"pass one explicitly (allowed: {', '.join(TASK_TYPES)})"
+        ) from None
 
 
 def load_spec(path: str | Path, **kwargs: Any) -> dict:
