@@ -6,6 +6,8 @@ An overlay is a mountable directory produced by the harness-evolution loop
     SYSTEM_APPENDIX.md   short appendix appended to the Pi message
     settings.json        allowlisted Pi settings fragment (shallow merge)
     skills/<name>/...    extra or overriding Pi skill bundles
+    harness.spec.json    optional declarative spec the rest was compiled from
+                         (see docs/jit-harness-spec.md §3)
 
 Anything else is rejected by ``validate_overlay``.
 """
@@ -23,7 +25,12 @@ logger = logging.getLogger(__name__)
 MAX_APPENDIX_BYTES = 4096
 MAX_SKILL_FILES = 32
 SETTINGS_ALLOWLIST = ("thinkingDefault",)
-ALLOWED_TOP_LEVEL = ("SYSTEM_APPENDIX.md", "settings.json", "skills")
+ALLOWED_TOP_LEVEL = (
+    "SYSTEM_APPENDIX.md",
+    "settings.json",
+    "skills",
+    "harness.spec.json",
+)
 # Overlay skills must never smuggle grading assets into the container.
 FORBIDDEN_PATH_PARTS = ("gt",)
 FORBIDDEN_NAME_SUBSTRINGS = ("grade",)
@@ -106,7 +113,49 @@ def validate_overlay(path: str | Path) -> Path:
                     f"skill file name is forbidden: {relative}"
                 )
 
+    _validate_embedded_spec(overlay)
     return overlay
+
+
+def _validate_embedded_spec(overlay: Path) -> None:
+    """Check ``harness.spec.json`` if present, and that it matches the overlay.
+
+    A spec that declares skills the overlay does not carry means the overlay was
+    hand-edited after compilation, which breaks the spec-to-overlay determinism
+    the bank depends on.
+    """
+    from .harness_spec import SPEC_FILENAME, SpecValidationError, load_spec
+
+    spec_file = overlay / SPEC_FILENAME
+    if not spec_file.exists():
+        return
+    if not spec_file.is_file():
+        raise OverlayValidationError(f"{SPEC_FILENAME} must be a regular file")
+
+    try:
+        spec = load_spec(spec_file)
+    except SpecValidationError as exc:
+        raise OverlayValidationError(f"{SPEC_FILENAME} is invalid: {exc}") from exc
+
+    declared = set(spec["modules"]["capability"]["skills"])
+    skills_dir = overlay / "skills"
+    present = (
+        {p.name for p in skills_dir.iterdir() if p.is_dir()}
+        if skills_dir.is_dir()
+        else set()
+    )
+    missing = sorted(declared - present)
+    if missing:
+        raise OverlayValidationError(
+            f"{SPEC_FILENAME} declares skills absent from the overlay: "
+            f"{', '.join(missing)}"
+        )
+    extra = sorted(present - declared)
+    if extra:
+        raise OverlayValidationError(
+            f"overlay carries skills not declared in {SPEC_FILENAME}: "
+            f"{', '.join(extra)}"
+        )
 
 
 def load_system_appendix(overlay_dir: str | Path) -> str | None:

@@ -1,0 +1,68 @@
+{
+  "react": {
+    "modules": {
+      "memory": "full",
+      "planning": "none",
+      "action": "react",
+      "capability": {"mode": "task_only", "skills": []}
+    },
+    "settings": {},
+    "paper": "ReAct",
+    "rationale": "Pi's stock loop with no added protocol. The fallback seed: always executable, used whenever generation or smoke validation fails."
+  },
+  "plan_execute": {
+    "modules": {
+      "memory": "full",
+      "planning": "checklist",
+      "action": "react",
+      "capability": {"mode": "task_only", "skills": []}
+    },
+    "settings": {},
+    "paper": "Plan-and-Execute",
+    "rationale": "Enumerate the whole subtask set up front, then execute. For tasks whose failure mode is stopping after a partial chain."
+  },
+  "resum": {
+    "modules": {
+      "memory": "resum",
+      "planning": "none",
+      "action": "persistent",
+      "capability": {"mode": "task_only", "skills": []}
+    },
+    "settings": {},
+    "paper": "ReSum",
+    "rationale": "Long-horizon runs where raw history would crowd out the task. Compress confirmed facts and keep grinding."
+  },
+  "flash_dag": {
+    "modules": {
+      "memory": "full",
+      "planning": "dag",
+      "action": "react",
+      "capability": {"mode": "task_only", "skills": []}
+    },
+    "settings": {},
+    "paper": "Flash-Searcher",
+    "rationale": "Tasks with several independent branches, where batching the independent lookups is the main win."
+  },
+  "evidence_search": {
+    "modules": {
+      "memory": "evidence",
+      "planning": "checklist",
+      "action": "budgeted",
+      "capability": {"mode": "task_only", "skills": []}
+    },
+    "settings": {"thinkingDefault": "high"},
+    "paper": "GAM (retrieval side, simplified)",
+    "rationale": "Capped-search tasks needing traceable answers: budget discipline outranks persistent retrying, and every fact must carry a source."
+  },
+  "tool_grind": {
+    "modules": {
+      "memory": "notes",
+      "planning": "checklist",
+      "action": "persistent",
+      "capability": {"mode": "route", "skills": []}
+    },
+    "settings": {},
+    "paper": "existing hand-written seed",
+    "rationale": "Tool-heavy environment tasks where empty results are usually wrong parameters rather than absent data."
+  }
+}
