@@ -18,3 +18,11 @@ task_blacklist:
 search:
   strategy: simple           # simple | pi_lanes
   operators: [refine, repair, restart]
+
+# Optional P4 multi-round JIT mode. This is disabled unless --jit-rounds is
+# passed to eval/evolve_task.py. The round count is generated harness trials,
+# not repeated rollouts of one fixed harness.
+jit:
+  rounds: 3
+  editor_model: vllm/gpt-5.5
+  editor_base_url: ${JIT_EDITOR_BASE_URL}

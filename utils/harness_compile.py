@@ -255,6 +255,11 @@ def build_task_overlay(
     # Seeds go through the registry check too: a seed that mounts a skill the
     # task cannot provide must fail here, not inside the container.
     resolved = validate_spec(candidate, available_skills=available_skills(registry))
+    if resolved["task_id"] != task["task_id"]:
+        raise CompileError(
+            f"spec task_id {resolved['task_id']!r} does not match "
+            f"task {task['task_id']!r}"
+        )
 
     audit = compile_spec(
         resolved,

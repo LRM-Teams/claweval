@@ -35,6 +35,8 @@ import asyncio
 import importlib
 import json
 import logging
+import os
+import statistics
 import sys
 import types
 from datetime import datetime, timezone
@@ -63,6 +65,14 @@ def load_claweval_runner(agentevals_repo: Path):
     for path in (str(agentevals_repo), str(driver.parent)):
         if path not in sys.path:
             sys.path.insert(0, path)
+
+    # ClawEval spawns its MCP worker as `python -m evals.suites.ClawEval...` and
+    # resolves CLAW_EVAL_ROOT relatively, so the whole suite only works with the
+    # agentevals checkout as the working directory. Callers must resolve their own
+    # paths to absolute before this point.
+    if Path.cwd() != agentevals_repo:
+        logger.info("chdir to %s (required by the ClawEval suite)", agentevals_repo)
+        os.chdir(agentevals_repo)
 
     module = importlib.import_module("evolve_claweval_task")
     return module.ClawEvalRunner, module.prepare_agent_dir, module.setup_environment
@@ -123,6 +133,27 @@ def build_appendix(
     }
 
 
+def summarize(scores: list[float | None]) -> dict:
+    """Mean and spread of an arm, keeping failed trials visible as None."""
+    graded = [s for s in scores if isinstance(s, (int, float))]
+    stats = {
+        "trials": len(scores),
+        "graded": len(graded),
+        "scores": scores,
+        "mean": None,
+        "stdev": None,
+        "min": None,
+        "max": None,
+    }
+    if graded:
+        stats["mean"] = round(statistics.fmean(graded), 4)
+        stats["min"] = min(graded)
+        stats["max"] = max(graded)
+        if len(graded) > 1:
+            stats["stdev"] = round(statistics.stdev(graded), 4)
+    return stats
+
+
 def archive_reference(archive_root: Path, task_id: str) -> dict:
     """Baseline and champion scores already recorded for this task, if any."""
     graph_file = archive_root / task_id / "graph.json"
@@ -134,13 +165,36 @@ def archive_reference(archive_root: Path, task_id: str) -> dict:
         return {}
     nodes = {n.get("candidate_id"): n for n in graph.get("nodes", [])}
     champion_id = graph.get("champion")
-    baseline = nodes.get("c0000") or {}
     champion = nodes.get(champion_id) or {}
+
+    # The archive's own empty-appendix arms: c0000 is the seeded baseline, but a
+    # later candidate can also carry an empty appendix, and c0000 sometimes holds
+    # an infrastructure failure rather than a grade.
+    archive_empty = []
+    for candidate_id, node in nodes.items():
+        appendix = (
+            archive_root
+            / task_id
+            / "candidates"
+            / candidate_id
+            / "overlay"
+            / "SYSTEM_APPENDIX.md"
+        )
+        score = node.get("overall_score")
+        if score is None or not appendix.is_file():
+            continue
+        if not appendix.read_text(encoding="utf-8").strip():
+            archive_empty.append({"candidate_id": candidate_id, "score": score})
+
     return {
-        "baseline_candidate": "c0000",
-        "baseline_score": baseline.get("overall_score"),
+        "archive_empty_appendix": archive_empty,
         "champion_candidate": champion_id,
         "champion_score": champion.get("overall_score"),
+        "archive_scores": sorted(
+            n.get("overall_score")
+            for n in nodes.values()
+            if n.get("overall_score") is not None
+        ),
     }
 
 
@@ -149,6 +203,7 @@ async def run_task(
     appendix: str,
     args: argparse.Namespace,
     port_offset: int,
+    label: str = "",
 ) -> dict:
     task_root = Path(args.output_root).expanduser() / task_id
     task_root.mkdir(parents=True, exist_ok=True)
@@ -167,11 +222,14 @@ async def run_task(
         save_dir=task_root / "runs",
         port_offset=port_offset,
     )
-    logger.info("[%s] running trial (port_offset=%d)", task_id, port_offset)
+    logger.info(
+        "[%s/%s] running trial (port_offset=%d)", task_id, label, port_offset
+    )
     evaluation = await runner.evaluate(appendix)
     logger.info(
-        "[%s] score=%s feasible=%s error=%s",
+        "[%s/%s] score=%s feasible=%s error=%s",
         task_id,
+        label,
         evaluation.get("score"),
         evaluation.get("feasible"),
         evaluation.get("error"),
@@ -180,9 +238,13 @@ async def run_task(
 
 
 async def run_all(args: argparse.Namespace) -> int:
-    harness_repo = Path(args.harness_repo).expanduser()
-    archive_root = Path(args.reference_root).expanduser()
-    output_root = Path(args.output_root).expanduser()
+    # Resolved up front: the ClawEval suite requires a chdir, after which any
+    # relative path would point somewhere else.
+    harness_repo = Path(args.harness_repo).expanduser().resolve()
+    archive_root = Path(args.reference_root).expanduser().resolve()
+    output_root = Path(args.output_root).expanduser().resolve()
+    args.output_root = str(output_root)
+    args.agentevals_repo = str(Path(args.agentevals_repo).expanduser().resolve())
     output_root.mkdir(parents=True, exist_ok=True)
 
     report = {
@@ -197,7 +259,11 @@ async def run_all(args: argparse.Namespace) -> int:
         "tasks": {},
     }
 
-    for index, task_id in enumerate(args.task_ids):
+    report["num_trials"] = args.num_trials
+    report_file = output_root / "jit_report.json"
+    port_slot = 0
+
+    for task_id in args.task_ids:
         appendix, audit = build_appendix(
             harness_repo, args.seed, task_id, appendix_only=not args.keep_capability
         )
@@ -212,37 +278,76 @@ async def run_all(args: argparse.Namespace) -> int:
             appendix + "\n", encoding="utf-8"
         )
 
-        entry = {"harness": audit, "reference": archive_reference(archive_root, task_id)}
-        try:
-            evaluation = await run_task(
-                task_id, appendix, args, args.port_offset + index * 50
+        entry = {
+            "harness": audit,
+            "reference": archive_reference(archive_root, task_id),
+            "arms": {},
+        }
+        # The empty arm is the honest control: same model, same suite, same day,
+        # same trial count. The archive's baseline was measured under conditions
+        # we cannot reproduce.
+        arms = {"empty": "", "jit": appendix}
+        if args.jit_only:
+            arms.pop("empty")
+
+        for arm_name, arm_appendix in arms.items():
+            trials = []
+            for trial in range(args.num_trials):
+                try:
+                    evaluation = await run_task(
+                        task_id,
+                        arm_appendix,
+                        args,
+                        args.port_offset + port_slot * 50,
+                        label=f"{arm_name}#{trial + 1}",
+                    )
+                except Exception as exc:  # noqa: BLE001 — keep the batch going
+                    logger.error("[%s/%s] trial raised: %s", task_id, arm_name, exc)
+                    trials.append({"score": None, "error": str(exc)[:300]})
+                else:
+                    trials.append(
+                        {
+                            "score": evaluation.get("score"),
+                            "metrics": evaluation.get("metrics"),
+                            "status": (evaluation.get("feedback") or {}).get("status"),
+                            "error": evaluation.get("error"),
+                        }
+                    )
+                port_slot += 1
+                report_file.write_text(
+                    json.dumps(report, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
+
+            entry["arms"][arm_name] = {
+                "trials": trials,
+                "summary": summarize([t.get("score") for t in trials]),
+            }
+            report["tasks"][task_id] = entry
+            report_file.write_text(
+                json.dumps(report, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
             )
-        except Exception as exc:  # noqa: BLE001 — one task must not kill the batch
-            logger.error("[%s] trial raised: %s", task_id, exc)
-            entry["error"] = str(exc)[:500]
-        else:
-            entry["jit_score"] = evaluation.get("score")
-            entry["metrics"] = evaluation.get("metrics")
-            entry["status"] = (evaluation.get("feedback") or {}).get("status")
-            entry["trace_path"] = evaluation.get("trace_path")
-            entry["error"] = evaluation.get("error")
-        report["tasks"][task_id] = entry
 
-        report_file = output_root / "jit_report.json"
-        report_file.write_text(
-            json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-        )
-
-    print("\n=== JIT harness vs archive ===")
-    print(f"{'task':38s} {'jit':>8s} {'baseline':>9s} {'champion':>9s}")
+    print(f"\n=== {args.num_trials} trials per arm, seed={args.seed} ===")
+    header = f"{'task':32s} {'empty mean':>12s} {'jit mean':>10s} {'champion':>9s}"
+    print(header)
     for task_id, entry in report["tasks"].items():
-        reference = entry.get("reference") or {}
-        print(
-            f"{task_id:38s} {str(entry.get('jit_score')):>8s} "
-            f"{str(reference.get('baseline_score')):>9s} "
-            f"{str(reference.get('champion_score')):>9s}"
-        )
-    print(f"\nreport: {output_root / 'jit_report.json'}")
+        arms = entry.get("arms", {})
+
+        def cell(arm: str) -> str:
+            summary = (arms.get(arm) or {}).get("summary") or {}
+            mean, stdev = summary.get("mean"), summary.get("stdev")
+            if mean is None:
+                return "n/a"
+            return f"{mean}±{stdev}" if stdev is not None else str(mean)
+
+        champion = (entry.get("reference") or {}).get("champion_score")
+        print(f"{task_id:32s} {cell('empty'):>12s} {cell('jit'):>10s} "
+              f"{str(champion):>9s}")
+        for arm in arms:
+            print(f"    {arm:6s} {(arms[arm]['summary'])['scores']}")
+    print(f"\nreport: {report_file}")
     return 0
 
 
@@ -253,6 +358,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model", default="deepseek-v4-flash-0731")
     parser.add_argument("--provider", default="zhizengzeng")
     parser.add_argument("--port-offset", type=int, default=5000)
+    parser.add_argument(
+        "--num-trials",
+        type=int,
+        default=3,
+        help="Trials per arm. Single-trial scores on this suite are noisy enough "
+        "to be unreadable (see docs/jit-harness-claweval-run.md)",
+    )
+    parser.add_argument(
+        "--jit-only",
+        action="store_true",
+        help="Skip the empty-appendix control arm",
+    )
     parser.add_argument("--harness-repo", default=str(DEFAULT_HARNESS_REPO))
     parser.add_argument(
         "--agentevals-repo",
